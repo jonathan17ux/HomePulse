@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>HomePulse</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+
+<body>
+
+    <div class="page-shell">
+
+        <!-- =========================================================
+         TOP NAVIGATION
+         ========================================================= -->
+
+        <header class="topbar">
+
+            <div class="brand">
+
+                <div class="brand-mark">
+                    HP
+                </div>
+
+                <div>
+                    <strong>HomePulse</strong>
+                    <span>Home Network & Homelab Monitor</span>
+                </div>
+
+            </div>
+
+
+            <div class="status-badge">
+
+                <span class="status-dot"></span>
+
+                System Online
+
+            </div>
+
+        </header>
+
+
+        <main>
+
+            <!-- =====================================================
+             HERO
+             ===================================================== -->
+
+            <section class="hero">
+
+                <p class="eyebrow">
+                    PERSONAL NETWORK & HOMELAB MONITORING
+                </p>
+
+                <h1>
+                    Your home network,
+                    <span>one pulse at a time.</span>
+                </h1>
+
+                <p class="hero-copy">
+                    HomePulse is a centralized monitoring application
+                    for collecting, analyzing, and reporting network
+                    health information. It combines persistent storage,
+                    event-driven processing, REST APIs, and production
+                    monitoring in one dashboard.
+                </p>
+
+            </section>
+
+
+            <!-- =====================================================
+             PRIMARY METRICS
+             ===================================================== -->
+
+            <section class="metric-grid">
+
+                <!-- External IP -->
+
+                <article class="metric-card">
+
+                    <div class="metric-header">
+
+                        <span>External IP</span>
+
+                        <span class="metric-icon">
+                            ◎
+                        </span>
+
+                    </div>
+
+
+                    {% if observations %}
+
+                    <div class="metric-value small-value">
+                        {{ observations[0].public_ip }}
+                    </div>
+
+                    <p>
+                        Latest observed public network address
+                    </p>
+
+                    {% else %}
+
+                    <div class="metric-value">
+                        —
+                    </div>
+
+                    <p>
+                        No network observation available yet
+                    </p>
+
+                    {% endif %}
+
+                </article>
+
+
+                <!-- Network Status -->
+
+                <article class="metric-card">
+
+                    <div class="metric-header">
+
+                        <span>Network Status</span>
+
+                        <span class="metric-icon">
+                            ◉
+                        </span>
+
+                    </div>
+
+
+                    {% if latest_analysis %}
+
+                    <div class="
+                            status-value
+                            {{ latest_analysis.status|lower }}
+                        ">
+                        {{ latest_analysis.status }}
+                    </div>
+
+                    <p>
+                        Latest analyzer health classification
+                    </p>
+
+                    {% else %}
+
+                    <div class="metric-value">
+                        —
+                    </div>
+
+                    <p>
+                        Run the analyzer to calculate status
+                    </p>
+
+                    {% endif %}
+
+                </article>
+
+
+                <!-- Average Response -->
+
+                <article class="metric-card">
+
+                    <div class="metric-header">
+
+                        <span>Average Response</span>
+
+                        <span class="metric-icon">
+                            ↗
+                        </span>
+
+                    </div>
+
+
+                    {% if latest_analysis %}
+
+                    <div class="metric-value">
+
+                        {{
+                        "%.0f"|format(
+                        latest_analysis.average_response_ms
+                        )
+                        }}
+
+                        <small>ms</small>
+
+                    </div>
+
+                    <p>
+                        Average response across analyzed observations
+                    </p>
+
+                    {% elif observations %}
+
+                    <div class="metric-value">
+
+                        {{
+                        "%.0f"|format(
+                        observations[0].response_time_ms
+                        )
+                        }}
+
+                        <small>ms</small>
+
+                    </div>
+
+                    <p>
+                        Latest external API response time
+                    </p>
+
+                    {% else %}
+
+                    <div class="metric-value">
+                        —
+                    </div>
+
+                    <p>
+                        No response data available yet
+                    </p>
+
+                    {% endif %}
+
+                </article>
+
+
+                <!-- Success Rate -->
+
+                <article class="metric-card">
+
+                    <div class="metric-header">
+
+                        <span>Success Rate</span>
+
+                        <span class="metric-icon">
+                            ✓
+                        </span>
+
+                    </div>
+
+
+                    {% if latest_analysis %}
+
+                    <div class="metric-value">
+
+                        {{
+                        "%.0f"|format(
+                        latest_analysis.success_rate
+                        )
+                        }}
+
+                        <small>%</small>
+
+                    </div>
+
+                    <p>
+                        Successful requests in the analyzed sample
+                    </p>
+
+                    {% else %}
+
+                    <div class="metric-value">
+                        —
+                    </div>
+
+                    <p>
+                        Analysis result not available yet
+                    </p>
+
+                    {% endif %}
+
+                </article>
+
+            </section>
+
+
+            <!-- =====================================================
+             NETWORK ANALYSIS
+             ===================================================== -->
+
+            <section class="panel analysis-panel">
+
+                <div class="table-heading">
+
+                    <div>
+
+                        <p class="panel-eyebrow">
+                            ANALYZED NETWORK DATA
+                        </p>
+
+                        <h2>
+                            Network Analysis
+                        </h2>
+
+                    </div>
+
+
+                    <a href="/api/analysis" class="api-link">
+                        View Analysis API →
+                    </a>
+
+                </div>
+
+
+                {% if latest_analysis %}
+
+                <div class="analysis-summary">
+
+                    <div>
+
+                        <span class="analysis-label">
+                            Current Status
+                        </span>
+
+                        <div class="
+                                analysis-status
+                                {{ latest_analysis.status|lower }}
+                            ">
+                            {{ latest_analysis.status }}
+                        </div>
+
+                    </div>
+
+
+                    <div>
+
+                        <span class="analysis-label">
+                            Sample Size
+                        </span>
+
+                        <div class="analysis-sample">
+                            {{ latest_analysis.sample_size }}
+                            observations
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="analysis-grid">
+
+                    <div class="analysis-card">
+
+                        <div class="metric-header">
+                            Average Response
+                        </div>
+
+                        <div class="metric-value">
+
+                            {{
+                            "%.0f"|format(
+                            latest_analysis.average_response_ms
+                            )
+                            }}
+
+                            <small>ms</small>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="analysis-card">
+
+                        <div class="metric-header">
+                            Minimum Response
+                        </div>
+
+                        <div class="metric-value">
+
+                            {{
+                            "%.0f"|format(
+                            latest_analysis.minimum_response_ms
+                            )
+                            }}
+
+                            <small>ms</small>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="analysis-card">
+
+                        <div class="metric-header">
+                            Maximum Response
+                        </div>
+
+                        <div class="metric-value">
+
+                            {{
+                            "%.0f"|format(
+                            latest_analysis.maximum_response_ms
+                            )
+                            }}
+
+                            <small>ms</small>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="analysis-card">
+
+                        <div class="metric-header">
+                            Success Rate
+                        </div>
+
+                        <div class="metric-value">
+
+                            {{
+                            "%.0f"|format(
+                            latest_analysis.success_rate
+                            )
+                            }}
+
+                            <small>%</small>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                {% else %}
+
+                <div class="empty-state">
+
+                    <div class="empty-icon">
+                        ◌
+                    </div>
+
+                    <h3>
+                        No analysis available yet
+                    </h3>
+
+                    <p>
+                        Run the HomePulse analyzer to generate
+                        network health statistics.
+                    </p>
+
+                    <code>
+                        python -m src.analyzer
+                    </code>
+
+                </div>
+
+                {% endif %}
+
+            </section>
+
+
+            <!-- =====================================================
+             DEVICE TEST + SYSTEM COMPONENTS
+             ===================================================== -->
+
+            <section class="content-grid">
+
+                <!-- Device Input -->
+
+                <article class="panel">
+
+                    <div class="panel-heading">
+
+                        <div>
+
+                            <p class="panel-eyebrow">
+                                WEB APPLICATION
+                            </p>
+
+                            <h2>
+                                Device Test
+                            </h2>
+
+                        </div>
+
+                    </div>
+
+
+                    <p class="panel-description">
+                        Enter a device name to demonstrate HomePulse
+                        web input processing and server-side response
+                        handling.
+                    </p>
+
+
+                    <form action="/echo_user_input" method="POST" class="device-form">
+
+                        <label for="user_input">
+                            Device name
+                        </label>
+
+
+                        <div class="form-row">
+
+                            <input id="user_input" name="user_input" type="text" placeholder="Example: Raspberry Pi 5"
+                                required>
+
+                            <button type="submit">
+                                Test Device
+                            </button>
+
+                        </div>
+
+                    </form>
+
+
+                    {% if echoed_input %}
+
+                    <div class="echo-result">
+
+                        <span>
+                            HomePulse received:
+                        </span>
+
+                        <strong>
+                            {{ echoed_input }}
+                        </strong>
+
+                    </div>
+
+                    {% endif %}
+
+                </article>
+
+
+                <!-- System Components -->
+
+                <article class="panel">
+
+                    <div class="panel-heading">
+
+                        <div>
+
+                            <p class="panel-eyebrow">
+                                SYSTEM ARCHITECTURE
+                            </p>
+
+                            <h2>
+                                System Components
+                            </h2>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="roadmap-item">
+
+                        <span class="roadmap-status complete">
+                            ✓
+                        </span>
+
+                        <div>
+
+                            <strong>
+                                Web Application
+                            </strong>
+
+                            <p>
+                                Flask dashboard and REST endpoints
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="roadmap-item">
+
+                        <span class="roadmap-status complete">
+                            ✓
+                        </span>
+
+                        <div>
+
+                            <strong>
+                                Data Collector
+                            </strong>
+
+                            <p>
+                                Independent external REST API collector
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="roadmap-item">
+
+                        <span class="roadmap-status complete">
+                            ✓
+                        </span>
+
+                        <div>
+
+                            <strong>
+                                Data Analyzer
+                            </strong>
+
+                            <p>
+                                Independent network analysis process
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="roadmap-item">
+
+                        <span class="roadmap-status complete">
+                            ✓
+                        </span>
+
+                        <div>
+
+                            <strong>
+                                Persistent Storage
+                            </strong>
+
+                            <p>
+                                SQLAlchemy database and migrations
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="roadmap-item">
+
+                        <span class="roadmap-status complete">
+                            ✓
+                        </span>
+
+                        <div>
+
+                            <strong>
+                                Event Messaging
+                            </strong>
+
+                            <p>
+                                RabbitMQ event-driven collaboration
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="roadmap-item">
+
+                        <span class="roadmap-status complete">
+                            ✓
+                        </span>
+
+                        <div>
+
+                            <strong>
+                                Production Monitoring
+                            </strong>
+
+                            <p>
+                                Health checks and Prometheus metrics
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </article>
+
+            </section>
+
+
+            <!-- =====================================================
+             RECENT OBSERVATIONS
+             ===================================================== -->
+
+            <section class="panel observations-panel">
+
+                <div class="table-heading">
+
+                    <div>
+
+                        <p class="panel-eyebrow">
+                            PERSISTENT NETWORK DATA
+                        </p>
+
+                        <h2>
+                            Recent Network Observations
+                        </h2>
+
+                    </div>
+
+
+                    <div class="api-links">
+
+                        <a href="/api/observations" class="api-link">
+                            Observations API →
+                        </a>
+
+                        <a href="/metrics" class="api-link secondary-link">
+                            Prometheus Metrics →
+                        </a>
+
+                    </div>
+
+                </div>
+
+
+                {% if observations %}
+
+                <div class="table-wrap">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+                                <th>ID</th>
+                                <th>Public IP</th>
+                                <th>Source</th>
+                                <th>HTTP</th>
+                                <th>Response</th>
+                                <th>Collected</th>
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+                            {% for observation in observations %}
+
+                            <tr>
+
+                                <td>
+                                    #{{ observation.id }}
+                                </td>
+
+                                <td class="ip-address">
+                                    {{ observation.public_ip }}
+                                </td>
+
+                                <td>
+                                    {{ observation.source }}
+                                </td>
+
+                                <td>
+
+                                    {% if
+                                    observation.http_status >= 200
+                                    and
+                                    observation.http_status < 400 %} <span class="http-ok">
+                                        {{ observation.http_status }}
+                                        </span>
+
+                                        {% else %}
+
+                                        <span class="http-error">
+                                            {{ observation.http_status }}
+                                        </span>
+
+                                        {% endif %}
+
+                                </td>
+
+                                <td>
+
+                                    {{
+                                    "%.2f"|format(
+                                    observation.response_time_ms
+                                    )
+                                    }}
+                                    ms
+
+                                </td>
+
+                                <td>
+
+                                    {{
+                                    observation.collected_at.strftime(
+                                    "%Y-%m-%d %H:%M:%S"
+                                    )
+                                    }}
+
+                                </td>
+
+                            </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+                {% else %}
+
+                <div class="empty-state">
+
+                    <div class="empty-icon">
+                        ⌁
+                    </div>
+
+                    <h3>
+                        No observations yet
+                    </h3>
+
+                    <p>
+                        Run the HomePulse collector from another
+                        terminal to collect network data.
+                    </p>
+
+                    <code>
+                        python -m src.collector
+                    </code>
+
+                </div>
+
+                {% endif %}
+
+            </section>
+
+
+            <!-- =====================================================
+             SYSTEM ENDPOINTS
+             ===================================================== -->
+
+            <section class="endpoint-grid">
+
+                <a href="/health" class="endpoint-card">
+
+                    <span class="endpoint-name">
+                        /health
+                    </span>
+
+                    <span class="endpoint-description">
+                        Application and database health
+                    </span>
+
+                </a>
+
+
+                <a href="/metrics" class="endpoint-card">
+
+                    <span class="endpoint-name">
+                        /metrics
+                    </span>
+
+                    <span class="endpoint-description">
+                        Prometheus-compatible monitoring
+                    </span>
+
+                </a>
+
+
+                <a href="/api/observations" class="endpoint-card">
+
+                    <span class="endpoint-name">
+                        /api/observations
+                    </span>
+
+                    <span class="endpoint-description">
+                        Raw observation REST API
+                    </span>
+
+                </a>
+
+
+                <a href="/api/analysis" class="endpoint-card">
+
+                    <span class="endpoint-name">
+                        /api/analysis
+                    </span>
+
+                    <span class="endpoint-description">
+                        Latest analyzed network data
+                    </span>
+
+                </a>
+
+            </section>
+
+        </main>
+
+
+        <!-- =========================================================
+         FOOTER
+         ========================================================= -->
+
+        <footer>
+
+            <span>
+                HomePulse
+            </span>
+
+            <span>
+                CSCA 5028 • Applications of Software Architecture
+                for Big Data
+            </span>
+
+        </footer>
+
+    </div>
+
+</body>
+
+</html>
